@@ -42,7 +42,12 @@ Once installed and configured, you can use the transformer with Imager X:
   mode: 'crop',
   transformerParams: {
     padding: 10,
-    background: '255:0:0',
+    background: 'ff0000',
+    border: {
+      width: 10,
+      color: '000000',
+      borderMethod: 'overlay',
+    }
   },
 }) %}
 ```

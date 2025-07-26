@@ -1,0 +1,63 @@
+{
+	"name": "smallpics/imagerx-smallpics",
+	"type": "craft-plugin",
+	"keywords": [
+		"smallpics",
+		"imagerx",
+		"transformer",
+		"images",
+		"processing"
+	],
+	"license": "MIT",
+	"support": {
+		"email": "support@smallpics.io",
+		"issues": "https://github.com/smallpics/imagerx-smallpics/issues?state=open",
+		"source": "https://github.com/smallpics/imagerx-smallpics",
+		"docs": "https://github.com/smallpics/imagerx-smallpics/blob/main/README.md"
+	},
+	"version": "0.1.0",
+	"description": "SmallPics transformer for Imager X",
+	"extra": {
+		"handle": "imagerx-smallpics",
+		"name": "Imager X SmallPics Transformer",
+		"developer": "SmallPics",
+		"class": "smallpics\\imagerx\\smallpics\\Plugin"
+	},
+	"autoload": {
+		"psr-4": {
+			"smallpics\\imagerx\\smallpics\\": "src/"
+		}
+	},
+	"require": {
+		"spacecatninja/imager-x": "^5.1",
+		"craftcms/cms": "^5.0.0",
+		"php": "^8.2",
+		"smallpics/smallpics-php": "dev-main"
+	},
+	"require-dev": {
+		"fostercommerce/ecs": "dev-main",
+		"fostercommerce/rector": "dev-main",
+		"phpstan/phpstan": "^1.12"
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"config": {
+		"allow-plugins": {
+			"craftcms/plugin-installer": true,
+			"yiisoft/yii2-composer": true
+		}
+	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/smallpics/smallpics-php"
+		}
+	],
+	"scripts": {
+		"phpstan": "phpstan --memory-limit=1G",
+		"ecs:check": "ecs check --ansi --memory-limit=1G",
+		"ecs:fix": "ecs check --ansi --fix --memory-limit=1G",
+		"rector:fix": "rector process --config rector.php",
+		"rector:dry-run": "rector process --dry-run --config rector.php"
+	}
+}

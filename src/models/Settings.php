@@ -12,14 +12,9 @@ class Settings extends Model
 	public string $baseUrl;
 
 	/**
-	 * The signing key for the URL
+	 * The signing secret for the URL
 	 */
-	public ?string $key = null;
-
-	/**
-	 * The signing salt for the URL
-	 */
-	public ?string $salt = null;
+	public ?string $secret = null;
 
 	/**
 	 * @var array<non-empty-string, mixed> Default parameters for smallpics transformations
@@ -33,7 +28,7 @@ class Settings extends Model
 	{
 		return [
 			[['baseUrl'], 'required'],
-			[['key', 'salt'],
+			[['secret'],
 				'string',
 				'skipOnEmpty' => true],
 		];

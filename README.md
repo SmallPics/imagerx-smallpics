@@ -22,8 +22,7 @@ Add the smallpics configuration to your Imager X SmallPics transformer config fi
 ```php
 return [
     'baseUrl' => getenv('SMALLPICS_BASE_URL'),
-    'key' => getenv('SMALLPICS_KEY') ?: null,
-    'salt' => getenv('SMALLPICS_SALT') ?: null,
+    'secret' => getenv('SMALLPICS_SECRET') ?: null,
     'defaultParams' => [],
 ];
 ```

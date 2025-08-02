@@ -47,12 +47,6 @@
 			"yiisoft/yii2-composer": true
 		}
 	},
-	"repositories": [
-		{
-			"type": "vcs",
-			"url": "https://github.com/smallpics/smallpics-php"
-		}
-	],
 	"scripts": {
 		"phpstan": "phpstan --memory-limit=1G",
 		"ecs:check": "ecs check --ansi --memory-limit=1G",

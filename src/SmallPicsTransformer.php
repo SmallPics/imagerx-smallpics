@@ -48,7 +48,8 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 				$config->secret,
 			);
 
-			$sourceUrl = $this->getSourceUrl($image);
+			$parsedUrl = parse_url((string) ${$this}->getSourceUrl($image));
+			$sourceUrl = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
 
 			$smallpicsParams = [];
 

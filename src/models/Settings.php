@@ -16,6 +16,8 @@ class Settings extends Model
 	 */
 	public ?string $secret = null;
 
+	public ?string $transformPathPrefix = 't';
+
 	/**
 	 * @var array<non-empty-string, mixed> Default parameters for smallpics transformations
 	 */

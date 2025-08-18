@@ -4,6 +4,7 @@ namespace smallpics\imagerx\smallpics;
 
 use craft\base\Component;
 use craft\elements\Asset;
+use smallpics\smallpics\enums\Fit;
 use smallpics\smallpics\Options;
 use smallpics\smallpics\UrlBuilder;
 use spacecatninja\imagerx\exceptions\ImagerException;
@@ -49,7 +50,7 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 				$config->transformPathPrefix,
 			);
 
-			$parsedUrl = parse_url((string) ${$this}->getSourceUrl($image));
+			$parsedUrl = parse_url($this->getSourceUrl($image));
 			$sourceUrl = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
 
 			$smallpicsParams = [];
@@ -70,6 +71,12 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 				// Assume mode maps to fit in SmallPics
 				// One of https://github.com/SmallPics/smallpics-php/blob/main/src/enums/Fit.php
 				$fit = $transform['mode'];
+
+				if ($fit === 'fit') {
+					// Slightly reduces migration work when moving over to SmallPics from some other ImagerX transformers
+					$fit = Fit::CONTAIN->value;
+				}
+
 				$smallpicsParams['fit'] = [
 					'fit' => $fit,
 				];

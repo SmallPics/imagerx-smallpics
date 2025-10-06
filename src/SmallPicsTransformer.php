@@ -47,7 +47,6 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 			$urlBuilder = new UrlBuilder(
 				$config->baseUrl,
 				$config->secret,
-				$config->transformPathPrefix,
 			);
 
 			$parsedUrl = parse_url($this->getSourceUrl($image));

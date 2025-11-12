@@ -15,12 +15,12 @@
 		"source": "https://github.com/smallpics/imagerx-smallpics",
 		"docs": "https://github.com/smallpics/imagerx-smallpics/blob/main/README.md"
 	},
-	"version": "0.1.0",
-	"description": "SmallPics transformer for Imager X",
+	"version": "1.0.0",
+	"description": "Small Pics transformer for Imager X",
 	"extra": {
 		"handle": "imagerx-smallpics",
-		"name": "Imager X SmallPics Transformer",
-		"developer": "SmallPics",
+		"name": "Imager X Small Pics Transformer",
+		"developer": "Small Pics",
 		"class": "smallpics\\imagerx\\smallpics\\Plugin"
 	},
 	"autoload": {
@@ -32,7 +32,7 @@
 		"spacecatninja/imager-x": "^5.1",
 		"craftcms/cms": "^5.0.0",
 		"php": "^8.2",
-		"smallpics/smallpics-php": "dev-main"
+		"smallpics/smallpics-php": "1.0.0"
 	},
 	"require-dev": {
 		"fostercommerce/ecs": "dev-main",

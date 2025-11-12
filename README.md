@@ -17,7 +17,7 @@ php craft plugin/install imagerx-smallpics
 
 ## Configuration
 
-Add the smallpics configuration to your Imager X SmallPics transformer config file (`config/imagerx-smallpics.php`):
+Add the smallpics configuration to your Imager X Small Pics transformer config file (`config/imagerx-smallpics.php`):
 
 ```php
 return [
@@ -53,6 +53,6 @@ Once installed and configured, you can use the transformer with Imager X:
 
 ## Notes
 
-Take a look at the SmallPics [processing options](https://docs.smallpics.com/docs/processing-options) for a list of available options to use in the `defaultParams` and `transformerParams` arrays.
+Take a look at the Small Pics [API](https://github.com/SmallPics/smallpics/blob/main/api/README.md) for a list of available options to use in the `defaultParams` and `transformerParams` arrays.
 
 This transformer uses [smallpics/smallpics-php](https://github.com/smallpics/smallpics-php) under the hood. Take a look there for more usage information.

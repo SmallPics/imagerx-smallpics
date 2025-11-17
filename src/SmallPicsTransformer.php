@@ -4,6 +4,8 @@ namespace smallpics\imagerx\smallpics;
 
 use craft\base\Component;
 use craft\elements\Asset;
+use smallpics\imagerx\smallpics\models\OriginConfig;
+use smallpics\imagerx\smallpics\models\Settings;
 use smallpics\smallpics\enums\Fit;
 use smallpics\smallpics\Options;
 use smallpics\smallpics\UrlBuilder;
@@ -13,7 +15,7 @@ use spacecatninja\imagerx\transformers\TransformerInterface;
 class SmallPicsTransformer extends Component implements TransformerInterface
 {
 	/**
-	 * Main transform method
+	 * Main transform method.
 	 *
 	 * @param array<array-key, array<array-key, mixed>> $transforms
 	 * @return ?SmallPicsTransformedImageModel[]
@@ -32,7 +34,7 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 	}
 
 	/**
-	 * Transform one image
+	 * Transform one image.
 	 *
 	 * @param array<array-key, mixed> $transform
 	 *
@@ -43,10 +45,35 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 		$config = Plugin::settings();
 
 		try {
-			// Create the UrlBuilder for smallpics
+			$origins = $config->origins ?? [];
+			/** @var array{origin?: ?string, ...<array-key, mixed>} $transformerParams */
+			$transformerParams = $transform['transformerParams'] ?? [];
+
+			$originName = $transformerParams['origin'] ?? $config->defaultOrigin ?? Settings::DEFAULT_ORIGIN_NAME;
+
+			if ($origins === []) {
+				throw new ImagerException('Small Pics is missing required config');
+			}
+
+			if (! isset($origins[$originName])) {
+				throw new ImagerException("Unknown Small Pics origin '{$originName}'");
+			}
+
+			/** @var OriginConfig $origin */
+			$origin = $origins[$originName];
+
+			$originBaseUrl = $origin->baseUrl ?? null;
+			$originSecret = $origin->secret ?? null;
+			$originDefaultParams = $origin->defaultParams ?? [];
+
+			if (! $originBaseUrl) {
+				throw new ImagerException("Small Pics baseUrl is missing for origin '{$originName}'");
+			}
+
+			// Create the UrlBuilder for Small Pics
 			$urlBuilder = new UrlBuilder(
-				$config->baseUrl,
-				$config->secret,
+				$originBaseUrl,
+				$originSecret,
 			);
 
 			$parsedUrl = parse_url($this->getSourceUrl($image));
@@ -67,30 +94,40 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 			}
 
 			if (isset($transform['mode'])) {
-				// Assume mode maps to fit in SmallPics
-				// One of https://github.com/SmallPics/smallpics-php/blob/main/src/enums/Fit.php
+				// Map Imager `mode` to Small Pics `fit` parameter.
+				// See https://github.com/SmallPics/smallpics-php/blob/main/src/enums/Fit.php
 				$fit = $transform['mode'];
 
 				if ($fit === 'fit') {
-					// Slightly reduces migration work when moving over to SmallPics from some other ImagerX transformers
+					// Slightly reduces migration work from other transformers
 					$fit = Fit::CONTAIN->value;
 				}
 
-				$smallpicsParams['fit'] = [
-					'fit' => $fit,
-				];
+				// Only pass values that the Fit enum actually knows about
+				$validFitValues = array_map(
+					static fn (Fit $case) => $case->value,
+					Fit::cases()
+				);
 
-				if (isset($transform['ratio'])) {
-					$smallpicsParams['fit']['zoom'] = $transform['ratio'];
+				if (in_array($fit, $validFitValues, true)) {
+					$smallpicsParams['fit'] = [
+						'fit' => $fit,
+					];
+
+					if (isset($transform['ratio'])) {
+						$smallpicsParams['fit']['zoom'] = $transform['ratio'];
+					}
 				}
 			}
 
-
-			$transformerParams = $transform['transformerParams'] ?? [];
+			// Remove origin selectors from transformerParams before passing downstream
+			unset($transformerParams['origin']);
 
 			$options = new Options([
-				// Ensure defaults are always applied
+				// Global defaults from settings
 				...($config->defaultParams ?? []),
+				// Per origin defaults
+				...$originDefaultParams,
 				// Apply standard ImagerX params
 				...$smallpicsParams,
 				// Apply any additional transform parameters
@@ -107,7 +144,7 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 	}
 
 	/**
-	 * Get source URL for the image
+	 * Get source URL for the image.
 	 *
 	 * @throws ImagerException
 	 */

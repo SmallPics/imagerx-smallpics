@@ -6,8 +6,9 @@ use craft\elements\Asset;
 use smallpics\smallpics\enums\Format;
 use smallpics\smallpics\Options;
 use spacecatninja\imagerx\models\TransformedImageInterface;
+use Stringable;
 
-class SmallPicsTransformedImageModel implements TransformedImageInterface
+class SmallPicsTransformedImageModel implements TransformedImageInterface, Stringable
 {
 	/**
 	 * @var string

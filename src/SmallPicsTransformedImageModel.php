@@ -21,6 +21,11 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface
 	) {
 	}
 
+	public function __toString(): string
+	{
+		return $this->getUrl();
+	}
+
 	/**
 	 * Get URL
 	 */

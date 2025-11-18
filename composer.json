@@ -29,10 +29,10 @@
 		}
 	},
 	"require": {
-		"spacecatninja/imager-x": "^5.1",
-		"craftcms/cms": "^5.0.0",
-		"php": "^8.2",
-		"smallpics/smallpics-php": "1.0.0"
+		"php": "^8.1",
+		"spacecatninja/imager-x": "^4.5|^5.1",
+		"craftcms/cms": "^4.5|^5.0.0",
+		"smallpics/smallpics-php": "^1.0"
 	},
 	"require-dev": {
 		"fostercommerce/ecs": "dev-main",

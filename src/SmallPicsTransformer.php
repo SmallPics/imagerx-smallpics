@@ -16,7 +16,7 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 	 * Main transform method
 	 *
 	 * @param array<array-key, array<array-key, mixed>> $transforms
-	 * @return SmallPicsTransformedImageModel[]
+	 * @return ?SmallPicsTransformedImageModel[]
 	 *
 	 * @throws ImagerException
 	 */

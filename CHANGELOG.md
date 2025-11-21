@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 - 2025-11-21
+
+- Support focal point cropping
+
 ## 1.0.1 - 2025-11-18
 
 - Add support for Craft 4

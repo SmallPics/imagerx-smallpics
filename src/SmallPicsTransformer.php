@@ -118,6 +118,15 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 						$smallpicsParams['fit']['zoom'] = $transform['ratio'];
 					}
 				}
+
+				if (($fit === Fit::CROP->value || $fit === Fit::COVER->value) && isset($transform['position'])) {
+					$position = $transform['position'];
+					/** @var string[] $split */
+					$split = preg_split('/\s+/', (string) $position);
+					[$x, $y] = $split;
+					$smallpicsParams['fit']['focalPointX'] = (int) $x;
+					$smallpicsParams['fit']['focalPointY'] = (int) $y;
+				}
 			}
 
 			// Remove origin selectors from transformerParams before passing downstream

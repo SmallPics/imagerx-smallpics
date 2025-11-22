@@ -15,6 +15,12 @@
 		"source": "https://github.com/smallpics/imagerx-smallpics",
 		"docs": "https://github.com/smallpics/imagerx-smallpics/blob/main/README.md"
 	},
+	"authors": [
+		{
+			"name": "Small Pics",
+			"homepage": "https://www.smallpics.io"
+		}
+	],
 	"description": "Small Pics transformer for Imager X",
 	"extra": {
 		"handle": "imagerx-smallpics",

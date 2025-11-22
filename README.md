@@ -19,19 +19,63 @@ php craft plugin/install imagerx-smallpics
 
 Add the Small Pics configuration to your Imager X Small Pics transformer config file (`config/imagerx-smallpics.php`):
 
-### Single origin config
+### Options
+
+#### baseUrl
+
+Base URL for your Small Pics origin.
+
+Example: `https://your-origin.smallpics.io/`
+
+#### secret
+
+Default: `null`.
+
+Optional signing secret for your Small Pics image origin.
+
+Setting this will enable URL signing for generated URLs. If your Small Pics config has signed URL disabled, then including a signature will have no effect on the transformed images.
+
+#### transformSvgs
+
+Default: `false`.
+
+Whether SVG images should be transformed.
+
+#### transformAnimatedGifs
+
+Default: `false`.
+
+Whether animated GIF images should be transformed.
+
+#### defaultParams
+
+Global default parameters for Small Pics transformations. See the Small Pics [API documentation](https://github.com/SmallPics/smallpics/blob/main/api/README.md) for available options.
+
+These are applied in addition to any default parameters configured per origin (if any), and are merged with any `transformerParams` passed when transforming an image.
+
+#### origins
+
+An array of named origin configurations.
+
+If you require multiple Small Pics origins, you can configure them here instead of configuring the root-level options.
+
+Each origin configuration supports the same options as above, see [multi-origin config](#multi-origin-config) below for an example configuration and [multi-origin usage](#multi-origin-usage) for how to select an origin when transforming an image.
+
+### Example configurations
+
+#### Single origin config
 
 ```php
 return [
     'baseUrl' => getenv('SMALLPICS_BASE_URL'),
     'secret' => getenv('SMALLPICS_SECRET') ?: null,
-    'defaultParams' => [],
     'transformSvgs' => false,
     'transformAnimatedGifs' => false,
+    'defaultParams' => [],
 ];
 ```
 
-### Multi-origin config
+#### Multi-origin config
 
 It is possible to configure multiple origins. You can then select the origin to use when transforming an image by setting the `origin` key in the `transformerParams` array.
 

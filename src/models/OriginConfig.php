@@ -7,7 +7,7 @@ use craft\base\Model;
 class OriginConfig extends Model
 {
 	/**
-	 * Base URL for the Small Pics service.
+	 * Base URL for the Small Pics origin.
 	 */
 	public ?string $baseUrl = null;
 

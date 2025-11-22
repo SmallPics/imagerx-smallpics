@@ -4,6 +4,7 @@ namespace smallpics\imagerx\smallpics;
 
 use craft\base\Component;
 use craft\elements\Asset;
+use smallpics\imagerx\smallpics\helpers\SmallPicsHelper;
 use smallpics\imagerx\smallpics\models\OriginConfig;
 use smallpics\imagerx\smallpics\models\Settings;
 use smallpics\smallpics\enums\Fit;
@@ -143,8 +144,15 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 				...$transformerParams,
 			]);
 
-			// Generate the URL
-			$url = $urlBuilder->buildUrl($sourceUrl, $options);
+			if ((SmallPicsHelper::isSvg($image) && ! $origin->transformSvgs) || (SmallPicsHelper::isAnimatedGif($image) && ! $origin->transformAnimatedGifs)) {
+				// If
+				// - It's an SVG and the origin is set to not transform SVGs, or
+				// - It's an animated GIF and the origin is set to not transform animated GIFs
+				$url = $this->getSourceUrl($image);
+			} else {
+				// Generate the URL
+				$url = $urlBuilder->buildUrl($sourceUrl, $options);
+			}
 
 			return new SmallPicsTransformedImageModel($url, $image, $options);
 		} catch (\Exception $exception) {

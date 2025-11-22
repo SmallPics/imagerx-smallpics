@@ -17,6 +17,16 @@ class OriginConfig extends Model
 	public ?string $secret = null;
 
 	/**
+	 * Whether SVGs should be transformed.
+	 */
+	public bool $transformSvgs = false;
+
+	/**
+	 * Whether animated GIFs should be transformed.
+	 */
+	public bool $transformAnimatedGifs = false;
+
+	/**
 	 * Global default parameters for Small Pics transformations.
 	 *
 	 * These are applied in addition to any global defaults.

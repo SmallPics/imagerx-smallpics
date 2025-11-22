@@ -27,28 +27,21 @@ class Settings extends Model
 	 *         'baseUrl' => '...',
 	 *         'secret' => '...',
 	 *         'defaultParams' => ['format' => 'avif'],
+	 *         'transformSvgs' => true,
+	 *         'transformAnimatedGifs' => false,
 	 *     ],
 	 *     'spaces' => [
 	 *         'baseUrl' => '...',
 	 *         'secret' => '...',
 	 *         'defaultParams' => ['format' => 'avif'],
+	 *         'transformSvgs' => false,
+	 *         'transformAnimatedGifs' => false,
 	 *     ],
 	 * ]
 	 *
 	 * @var array<non-empty-string, OriginConfig>
 	 */
 	public array $origins = [];
-
-	/**
-	 * Legacy single origin base URL for the Small Pics service.
-	 * Used when no origins are defined.
-	 */
-	public ?string $baseUrl = null;
-
-	/**
-	 * Legacy single origin signing secret for the URL.
-	 */
-	public ?string $secret = null;
 
 	/**
 	 * Global default parameters for Small Pics transformations.
@@ -69,12 +62,6 @@ class Settings extends Model
 
 		if (array_key_exists('baseUrl', $values)) {
 			$baseUrl = $values['baseUrl'];
-			unset($values['baseUrl']);
-		}
-
-		if (array_key_exists('secret', $values)) {
-			$secret = $values['secret'];
-			unset($values['secret']);
 		}
 
 		if (($values['origins'] ?? null) === null) {
@@ -82,10 +69,23 @@ class Settings extends Model
 		}
 
 		if ($baseUrl !== null) {
+			if (array_key_exists('secret', $values)) {
+				$secret = $values['secret'];
+			}
+
 			$defaultOrigin = new OriginConfig([
 				'baseUrl' => $baseUrl,
 				'secret' => $secret,
+				'transformSvgs' => $values['transformSvgs'] ?? false,
+				'transformAnimatedGifs' => $values['transformAnimatedGifs'] ?? false,
 			]);
+
+			unset(
+				$values['baseUrl'],
+				$values['secret'],
+				$values['transformSvgs'],
+				$values['transformAnimatedGifs']
+			);
 
 			$values['origins'][self::DEFAULT_ORIGIN_NAME] = $defaultOrigin;
 		}

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 - 2025-11-22
+
+- Add config to disable running transforms for SVGs and animated GIFs
+
 ## 1.0.2 - 2025-11-21
 
 - Support focal point cropping

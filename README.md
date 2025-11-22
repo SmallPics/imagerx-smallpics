@@ -26,6 +26,8 @@ return [
     'baseUrl' => getenv('SMALLPICS_BASE_URL'),
     'secret' => getenv('SMALLPICS_SECRET') ?: null,
     'defaultParams' => [],
+    'transformSvgs' => false,
+    'transformAnimatedGifs' => false,
 ];
 ```
 
@@ -42,6 +44,8 @@ return [
         \smallpics\imagerx\smallpics\models\Settings::DEFAULT_ORIGIN_NAME => [ // Or simply 'default'
             'baseUrl' => getenv('SMALLPICS_DEFAULT_ORIGIN_BASE_URL'),
             'secret' => getenv('SMALLPICS_DEFAULT_ORIGIN_SECRET') ?: null,
+            'transformSvgs' => false,
+            'transformAnimatedGifs' => false,
             'defaultParams' => [
                 'quality' => 80,
             ],
@@ -49,6 +53,8 @@ return [
         'origin2' => [
             'baseUrl' => getenv('SMALLPICS_ORIGIN2_BASE_URL'),
             'secret' => getenv('SMALLPICS_ORIGIN2_SECRET') ?: null,
+            'transformSvgs' => true,
+            'transformAnimatedGifs' => false,
             'defaultParams' => [
                 'format' => 'png',
                 'quality' => 90

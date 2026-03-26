@@ -1,6 +1,10 @@
 # Imager X Small Pics Transformer
 
-This module provides an [Small Pics](https://www.smallpics.io) transformer for [Imager X](https://github.com/spacecatninja/craft-imager-x).
+[Small Pics](https://www.smallpics.io) is a fast, affordable image transform service with global edge caching and AVIF by default. This plugin adds Small Pics as a transformer for [Imager X](https://github.com/spacecatninja/craft-imager-x), giving you on-the-fly image resizing, cropping, format conversion, watermarks, and more through a simple [URL API](https://www.smallpics.io/docs).
+
+Plans start at $9/mo with predictable, flat-tier pricing and no per-bandwidth charges. Works with any origin: S3, R2, DigitalOcean Spaces, Hetzner, or any HTTP source. Supports multiple origins per project and signed URLs for secure delivery.
+
+Switching from Imgix? Small Pics includes an [Imgix parameter compatibility mode](https://www.smallpics.io/docs/imgix-compatibility), and most existing Imager X template code works with minimal changes. See the [migration guide](https://www.smallpics.io/blog/migrating-from-imgix-to-small-pics-with-imager-x) for a step-by-step walkthrough.
 
 ## Requirements
 
@@ -49,7 +53,7 @@ Whether animated GIF images should be transformed.
 
 #### defaultParams
 
-Global default parameters for Small Pics transformations. See the Small Pics [API documentation](https://github.com/SmallPics/smallpics/blob/main/api/README.md) for available options.
+Global default parameters for Small Pics transformations. See the Small Pics [API documentation](https://www.smallpics.io/docs) for available options.
 
 These are applied in addition to any default parameters configured per origin (if any), and are merged with any `transformerParams` passed when transforming an image.
 
@@ -175,6 +179,6 @@ Once installed and configured, you can use the transformer with Imager X:
 
 ## Notes
 
-Take a look at the Small Pics [API](https://github.com/SmallPics/smallpics/blob/main/api/README.md) for a list of available options to use in the `defaultParams` and `transformerParams` arrays.
+Take a look at the Small Pics [API documentation](https://www.smallpics.io/docs) for a list of available options to use in the `defaultParams` and `transformerParams` arrays.
 
 This transformer uses [smallpics/smallpics-php](https://github.com/smallpics/smallpics-php) under the hood. Take a look there for more usage information.

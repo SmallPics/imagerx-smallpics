@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 - 2026-06-01
+
+- Support Imager X v6
+
 ## 1.0.3 - 2025-11-22
 
 - Add config to disable running transforms for SVGs and animated GIFs

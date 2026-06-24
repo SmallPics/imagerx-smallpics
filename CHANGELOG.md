@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 - 2026-06-01
+## 1.1.0 - 2026-06-24
 
 - Support Imager X v6
 

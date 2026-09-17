@@ -4,10 +4,10 @@ namespace smallpics\imagerx\smallpics\models;
 
 use craft\base\Model;
 
-class OriginConfig extends Model
+class SourceConfig extends Model
 {
 	/**
-	 * Base URL for the Small Pics origin.
+	 * Base URL for the Small Pics source.
 	 */
 	public ?string $baseUrl = null;
 
@@ -24,7 +24,7 @@ class OriginConfig extends Model
 	/**
 	 * Whether animated GIFs should be transformed.
 	 */
-	public bool $transformAnimatedGifs = false;
+	public bool $transformAnimatedGifs = true;
 
 	/**
 	 * Global default parameters for Small Pics transformations.

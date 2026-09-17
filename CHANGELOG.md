@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0 - Unreleased
+
+> {warning} This update contains breaking changes. Read the [upgrade guide](https://github.com/SmallPics/imagerx-smallpics/blob/main/migrating-v1-v2.md) before updating.
+
+- Remove origin settings and `OriginConfig`; use sources
+- Default `transformAnimatedGifs` to `true`
+- Set `passthrough=1` when `transformSvgs` is false
+- Require `smallpics/smallpics-php:^2.0.0`
+- Updated to use new Small Pics params
+
 ## 1.1.0 - 2026-06-24
 
 - Support Imager X v6

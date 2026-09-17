@@ -13,7 +13,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	/**
 	 * @var string
 	 */
-	public const DEFAULT_MIME_TYPE = 'application/octet-stream';
+	public const DEFAULT_MIME_TYPE = 'image/avif';
 
 	public function __construct(
 		private readonly string $url,
@@ -40,7 +40,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getWidth(): int
 	{
-		return $this->options->getWidth() ?? 0;
+		return $this->dimension($this->options->getParam(Options::WIDTH), 'width');
 	}
 
 	/**
@@ -48,7 +48,12 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getHeight(): int
 	{
-		return $this->options->getHeight() ?? 0;
+		return $this->dimension($this->options->getParam(Options::HEIGHT), 'height');
+	}
+
+	public function getOptions(): Options
+	{
+		return $this->options;
 	}
 
 	/**
@@ -66,16 +71,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	{
 		$format = $this->options->getFormat();
 
-		// If the image isn't configured to be converted into a specific format, then we use the source image's MIME type
 		if (! $format instanceof Format) {
-			if ($this->source instanceof Asset) {
-				$mimeType = $this->source->getMimeType();
-				if ($mimeType !== null) {
-					return $mimeType;
-				}
-			}
-
-			// If the source image is not an asset, then we return the default MIME type
 			return self::DEFAULT_MIME_TYPE;
 		}
 
@@ -87,6 +83,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 			'gif' => 'image/gif',
 			'webp' => 'image/webp',
 			'avif' => 'image/avif',
+			'jxl' => 'image/jxl',
 		];
 
 		return $formats[$format->value];
@@ -105,7 +102,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getExtension(): string
 	{
-		return $this->options->getFormat()?->value ?? 'jpg';
+		return $this->options->getFormat()?->value ?? 'avif';
 	}
 
 	/**
@@ -174,5 +171,20 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	public function getPlaceholder(array $settings = []): string
 	{
 		return '';
+	}
+
+	private function dimension(int|float|string|null $value, string $axis): int
+	{
+		if (is_string($value) && preg_match('/^([\d.]+)([pwh])$/', $value, $matches)) {
+			if (! $this->source instanceof Asset) {
+				return 0;
+			}
+
+			$width = $matches[2] === 'w' || ($matches[2] === 'p' && $axis === 'width');
+			$base = $width ? $this->source->getWidth() : $this->source->getHeight();
+			return (int) round((float) $matches[1] * ($base ?? 0) / 100);
+		}
+
+		return (int) ($value ?? 0);
 	}
 }

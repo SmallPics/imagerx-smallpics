@@ -3,103 +3,54 @@
 namespace smallpics\imagerx\smallpics\models;
 
 use craft\base\Model;
-use spacecatninja\imagerx\exceptions\ImagerException;
 
 class Settings extends Model
 {
-	/**
-	 * @var string
-	 */
-	public const DEFAULT_ORIGIN_NAME = 'default';
+	public const DEFAULT_SOURCE_NAME = 'default';
+
+	public string $defaultSource = self::DEFAULT_SOURCE_NAME;
 
 	/**
-	 * Name of the default origin to use when none is specified.
+	 * @var array<string, SourceConfig>
 	 */
-	public string $defaultOrigin = self::DEFAULT_ORIGIN_NAME;
+	public array $sources = [];
 
 	/**
-	 * Map of origins.
-	 *
-	 * Example:
-	 *
-	 * [
-	 *     'default' => [
-	 *         'baseUrl' => '...',
-	 *         'secret' => '...',
-	 *         'defaultParams' => ['format' => 'avif'],
-	 *         'transformSvgs' => true,
-	 *         'transformAnimatedGifs' => false,
-	 *     ],
-	 *     'spaces' => [
-	 *         'baseUrl' => '...',
-	 *         'secret' => '...',
-	 *         'defaultParams' => ['format' => 'avif'],
-	 *         'transformSvgs' => false,
-	 *         'transformAnimatedGifs' => false,
-	 *     ],
-	 * ]
-	 *
-	 * @var array<non-empty-string, OriginConfig>
-	 */
-	public array $origins = [];
-
-	/**
-	 * Global default parameters for Small Pics transformations.
-	 * These are applied in addition to any per origin defaults.
-	 *
-	 * @var array<non-empty-string, mixed>
+	 * @var array<string, mixed>
 	 */
 	public array $defaultParams = [];
 
 	/**
-	 * @param array<array-key, mixed> $values
+	 * @param array<string, mixed> $values
 	 * @param bool $safeOnly
 	 */
 	public function setAttributes($values, $safeOnly = true): void
 	{
-		$baseUrl = null;
-		$secret = null;
-
-		if (array_key_exists('baseUrl', $values)) {
-			$baseUrl = $values['baseUrl'];
-		}
-
-		if (($values['origins'] ?? null) === null) {
-			$values['origins'] = [];
-		}
-
-		if ($baseUrl !== null) {
-			if (array_key_exists('secret', $values)) {
-				$secret = $values['secret'];
-			}
-
-			$defaultOrigin = new OriginConfig([
-				'baseUrl' => $baseUrl,
-				'secret' => $secret,
+		/** @var array<string, SourceConfig|array<string, mixed>> $sources */
+		$sources = $values['sources'] ?? [];
+		if ($sources === [] && ! empty($values['baseUrl'])) {
+			$sources[self::DEFAULT_SOURCE_NAME] = [
+				'baseUrl' => $values['baseUrl'],
+				'secret' => $values['secret'] ?? null,
 				'transformSvgs' => $values['transformSvgs'] ?? false,
-				'transformAnimatedGifs' => $values['transformAnimatedGifs'] ?? false,
-			]);
-
-			unset(
-				$values['baseUrl'],
-				$values['secret'],
-				$values['transformSvgs'],
-				$values['transformAnimatedGifs']
-			);
-
-			$values['origins'][self::DEFAULT_ORIGIN_NAME] = $defaultOrigin;
+				'transformAnimatedGifs' => $values['transformAnimatedGifs'] ?? true,
+			];
 		}
 
-		if ($values['origins'] === []) {
-			throw new ImagerException('Small Pics is missing required config');
-		}
-
-		foreach ($values['origins'] as $key => $originConfig) {
-			if (is_array($originConfig)) {
-				$values['origins'][$key] = new OriginConfig($originConfig);
-			}
-		}
-
+		$this->setSources($sources);
+		$values['sources'] = $this->sources;
+		$values['defaultSource'] ??= array_key_first($this->sources) ?? self::DEFAULT_SOURCE_NAME;
+		unset($values['baseUrl'], $values['secret'], $values['transformSvgs'], $values['transformAnimatedGifs']);
 		parent::setAttributes($values, $safeOnly);
+	}
+
+	/**
+	 * @param array<string, SourceConfig|array<string, mixed>> $sources
+	 */
+	private function setSources(array $sources): void
+	{
+		$this->sources = collect($sources)
+			->map(static fn (SourceConfig|array $source): SourceConfig => is_array($source) ? new SourceConfig($source) : $source)
+			->all();
 	}
 }

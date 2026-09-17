@@ -4,9 +4,9 @@ namespace smallpics\imagerx\smallpics;
 
 use craft\base\Component;
 use craft\elements\Asset;
+use craft\helpers\Assets as AssetsHelper;
 use smallpics\imagerx\smallpics\helpers\SmallPicsHelper;
-use smallpics\imagerx\smallpics\models\OriginConfig;
-use smallpics\imagerx\smallpics\models\Settings;
+use smallpics\imagerx\smallpics\models\SourceConfig;
 use smallpics\smallpics\enums\Fit;
 use smallpics\smallpics\Options;
 use smallpics\smallpics\UrlBuilder;
@@ -46,111 +46,58 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 		$config = Plugin::settings();
 
 		try {
-			$origins = $config->origins ?? [];
-			/** @var array{origin?: ?string, ...<array-key, mixed>} $transformerParams */
+			$sources = $config->sources;
+			/** @var array{source?: ?string, ...<array-key, mixed>} $transformerParams */
 			$transformerParams = $transform['transformerParams'] ?? [];
 
-			$originName = $transformerParams['origin'] ?? $config->defaultOrigin ?? Settings::DEFAULT_ORIGIN_NAME;
+			$sourceName = $transformerParams['source'] ?? $config->defaultSource;
 
-			if ($origins === []) {
+			if ($sources === []) {
 				throw new ImagerException('Small Pics is missing required config');
 			}
 
-			if (! isset($origins[$originName])) {
-				throw new ImagerException("Unknown Small Pics origin '{$originName}'");
+			if (! isset($sources[$sourceName])) {
+				throw new ImagerException("Unknown Small Pics source '{$sourceName}'");
 			}
 
-			/** @var OriginConfig $origin */
-			$origin = $origins[$originName];
+			/** @var SourceConfig $source */
+			$source = $sources[$sourceName];
 
-			$originBaseUrl = $origin->baseUrl ?? null;
-			$originSecret = $origin->secret ?? null;
-			$originDefaultParams = $origin->defaultParams ?? [];
+			$sourceBaseUrl = $source->baseUrl ?? null;
+			$sourceSecret = $source->secret ?? null;
+			$sourceDefaultParams = $source->defaultParams ?? [];
 
-			if (! $originBaseUrl) {
-				throw new ImagerException("Small Pics baseUrl is missing for origin '{$originName}'");
+			if (! $sourceBaseUrl) {
+				throw new ImagerException("Small Pics baseUrl is missing for source '{$sourceName}'");
 			}
 
 			// Create the UrlBuilder for Small Pics
 			$urlBuilder = new UrlBuilder(
-				$originBaseUrl,
-				$originSecret,
+				$sourceBaseUrl,
+				$sourceSecret,
 			);
 
 			$parsedUrl = parse_url($this->getSourceUrl($image));
 			$sourceUrl = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
 
-			$smallpicsParams = [];
-
-			if (isset($transform['width'])) {
-				$smallpicsParams['width'] = $transform['width'];
-			}
-
-			if (isset($transform['height'])) {
-				$smallpicsParams['height'] = $transform['height'];
-			}
-
-			if (isset($transform['format'])) {
-				$smallpicsParams['format'] = $transform['format'];
-			}
-
-			if (isset($transform['mode'])) {
-				// Map Imager `mode` to Small Pics `fit` parameter.
-				// See https://github.com/SmallPics/smallpics-php/blob/main/src/enums/Fit.php
-				$fit = $transform['mode'];
-
-				if ($fit === 'fit') {
-					// Slightly reduces migration work from other transformers
-					$fit = Fit::CONTAIN->value;
-				}
-
-				// Only pass values that the Fit enum actually knows about
-				$validFitValues = array_map(
-					static fn (Fit $case) => $case->value,
-					Fit::cases()
-				);
-
-				if (in_array($fit, $validFitValues, true)) {
-					$smallpicsParams['fit'] = [
-						'fit' => $fit,
-					];
-
-					if (isset($transform['ratio'])) {
-						$smallpicsParams['fit']['zoom'] = $transform['ratio'];
-					}
-				}
-
-				if (($fit === Fit::CROP->value || $fit === Fit::COVER->value) && isset($transform['position'])) {
-					$position = $transform['position'];
-					/** @var string[] $split */
-					$split = preg_split('/\s+/', (string) $position);
-					[$x, $y] = $split;
-					$smallpicsParams['fit']['focalPointX'] = (int) $x;
-					$smallpicsParams['fit']['focalPointY'] = (int) $y;
-				}
-			}
-
-			// Remove origin selectors from transformerParams before passing downstream
-			unset($transformerParams['origin']);
+			$smallpicsParams = $this->normalizeTransform($transform);
+			unset($transformerParams['source']);
 
 			$options = new Options([
-				// Global defaults from settings
-				...($config->defaultParams ?? []),
-				// Per origin defaults
-				...$originDefaultParams,
-				// Apply standard ImagerX params
+				...$this->normalizeOptionKeys($config->defaultParams),
+				...$this->normalizeOptionKeys($sourceDefaultParams),
 				...$smallpicsParams,
-				// Apply any additional transform parameters
-				...$transformerParams,
+				...$this->normalizeOptionKeys($transformerParams),
 			]);
 
-			if ((SmallPicsHelper::isSvg($image) && ! $origin->transformSvgs) || (SmallPicsHelper::isAnimatedGif($image) && ! $origin->transformAnimatedGifs)) {
-				// If
-				// - It's an SVG and the origin is set to not transform SVGs, or
-				// - It's an animated GIF and the origin is set to not transform animated GIFs
+			if (! $source->transformSvgs) {
+				$options->setPassthrough(true);
+			}
+
+			// Order matters - isAnimatedGif downloads the file and does work which we'd like to avoid if possible.
+			if (! $source->transformAnimatedGifs && SmallPicsHelper::isAnimatedGif($image)) {
 				$url = $this->getSourceUrl($image);
 			} else {
-				// Generate the URL
 				$url = $urlBuilder->buildUrl($sourceUrl, $options);
 			}
 
@@ -161,6 +108,80 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 	}
 
 	/**
+	 * @param array<array-key, mixed> $transform
+	 * @return array<string, mixed>
+	 */
+	private function normalizeTransform(array $transform): array
+	{
+		$params = $this->normalizeOptionKeys($transform);
+		if (isset($transform['mode']) && is_string($transform['mode']) && ! isset($params['fit'])) {
+			$fit = match ($transform['mode']) {
+				'fit' => Fit::CONTAIN->value,
+				'letterbox' => Fit::FILL->value,
+				'crop' => Fit::CROP->value,
+				default => Fit::tryFrom($transform['mode'])?->value,
+			};
+			if ($fit !== null) {
+				$params['fit'] = $fit;
+			}
+		}
+
+		if (isset($transform['ratio']) && ! isset($params['aspectRatio'])) {
+			$params['aspectRatio'] = $transform['ratio'];
+		}
+
+		if (! isset($params['quality'])) {
+			$format = $params['format'] ?? 'jpg';
+			$qualityKey = match ($format) {
+				'webp' => 'webpQuality',
+				'avif' => 'avifQuality',
+				'jxl' => 'jxlQuality',
+				default => 'jpegQuality',
+			};
+			if (isset($transform[$qualityKey])) {
+				$params['quality'] = $transform[$qualityKey];
+			} elseif (isset($transform['jpegQuality'])) {
+				$params['quality'] = $transform['jpegQuality'];
+			}
+		}
+
+		if (isset($transform['fill']) && ! isset($params['background'])) {
+			$params['background'] = $transform['fill'];
+		}
+
+		/** @var array<array-key, mixed> $transformerParams */
+		$transformerParams = $transform['transformerParams'] ?? [];
+		$overrides = $this->normalizeOptionKeys($transformerParams);
+		if (! isset($overrides['crop']) && ! isset($overrides['focalPoint']) && isset($transform['position']) && in_array($params['fit'] ?? 'crop', ['crop', Fit::CROP], true) && ! isset($params['crop']) && ! isset($params['focalPoint'])) {
+			$position = $transform['position'];
+			if (is_string($position) && preg_match('/^([\d.]+)%?\s+([\d.]+)%?$/', trim($position), $matches)) {
+				$params['focalPoint'] ??= $matches[1] . 'w:' . $matches[2] . 'h';
+			} elseif (is_string($position) && ! isset($params['crop'])) {
+				$params['crop'] = match ($position) {
+					'top-center' => 'top', 'center-left' => 'left', 'center-center' => 'center',
+					'center-right' => 'right', 'bottom-center' => 'bottom',
+					default => $position,
+				};
+			}
+
+			$params['fit'] ??= Fit::CROP->value;
+		}
+
+		return $params;
+	}
+
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @return array<string, mixed>
+	 */
+	private function normalizeOptionKeys(array $params): array
+	{
+		return collect($params)->mapWithKeys(static fn (mixed $value, int|string $key): array => [
+			Options::allOptions()[$key] ?? (string) $key => $value,
+		])->all();
+	}
+
+	/**
 	 * Get source URL for the image.
 	 *
 	 * @throws ImagerException
@@ -168,7 +189,7 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 	private function getSourceUrl(Asset|string $image): string
 	{
 		if ($image instanceof Asset) {
-			return $image->getUrl() ?? '';
+			return AssetsHelper::generateUrl($image);
 		}
 
 		return $image;

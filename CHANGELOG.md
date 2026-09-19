@@ -9,6 +9,8 @@
 - Set `passthrough=1` when `transformSvgs` is false
 - Require `smallpics/smallpics-php:^2.0.0`
 - Updated to use new Small Pics params
+- Add `markfp` for watermark focal points.
+- Add `markzoom` for watermark zoom.
 
 ## 1.1.0 - 2026-06-24
 

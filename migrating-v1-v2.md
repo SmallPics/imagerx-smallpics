@@ -478,7 +478,7 @@ return [
 
 ## Watermark fit
 
-`markfit` uses the same separate parameters.
+Use `markfp` for the watermark focal point and `markzoom` for numeric zoom. Set both `markw` and `markh` when cropping without zoom.
 
 ### PHP associative array
 
@@ -503,11 +503,11 @@ $image = ImagerX::$plugin->imager->transformImage($asset, [
     'transformerParams' => [
         'mark' => 'logo.png',
         'markfit' => 'crop',
-        'fp' => '25p:75p',
-        'zoom' => 2
+        'markfp' => '25p:75p',
+        'markzoom' => 2,
     ]
 ]);
-// ?fp=25p:75p&mark=logo.png&markfit=crop&w=800&zoom=2
+// ?mark=logo.png&markfit=crop&markfp=25p:75p&markzoom=2&w=800
 ```
 
 ### Twig
@@ -532,8 +532,8 @@ $image = ImagerX::$plugin->imager->transformImage($asset, [
     transformerParams: {
         mark: 'logo.png',
         markfit: 'crop',
-        fp: '25p:75p',
-        zoom: 2
+        markfp: '25p:75p',
+        markzoom: 2,
     }
 }) %}
 ```
@@ -560,11 +560,13 @@ $image = ImagerX::$plugin->imager->transformImage($asset, [
     'width' => 800,
     'transformerParams' => [
         'mark' => 'logo.png',
+        'markw' => 100,
+        'markh' => 50,
         'markfit' => 'crop',
-        'crop' => 'top'
+        'markfp' => '50p:0'
     ]
 ]);
-// ?crop=top&mark=logo.png&markfit=crop&w=800
+// ?mark=logo.png&markfit=crop&markfp=50p:0&markh=50&markw=100&w=800
 ```
 
 ### Twig
@@ -588,8 +590,10 @@ $image = ImagerX::$plugin->imager->transformImage($asset, [
     width: 800,
     transformerParams: {
         mark: 'logo.png',
+        markw: 100,
+        markh: 50,
         markfit: 'crop',
-        crop: 'top'
+        markfp: '50p:0'
     }
 }) %}
 ```
@@ -607,9 +611,12 @@ $options->setWatermarkFit('crop', null, 25, 75, 2);
 **After:**
 
 ```php
-$options->setWatermarkFit(Fit::CROP)->setCropPosition(CropPosition::TOP);
-$options->setWatermarkFit('crop')->setFocalPoint('25p', '75p')->setZoom(2);
-// ?crop=top&fp=25p:75p&markfit=crop&zoom=2
+$options->setWatermarkWidth(100)
+    ->setWatermarkHeight(50)
+    ->setWatermarkFit(Fit::CROP)
+    ->setWatermarkFocalPoint('50p', 0);
+$options->setWatermarkFit('crop')->setWatermarkFocalPoint('25p', '75p')->setWatermarkZoom(2);
+// ?markfit=crop&markfp=25p:75p&markh=50&markw=100&markzoom=2
 ```
 
 ## Watermark offsets

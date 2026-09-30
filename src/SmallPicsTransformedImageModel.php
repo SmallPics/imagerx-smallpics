@@ -69,6 +69,10 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getMimeType(): string
 	{
+		if ($this->isSvgPassthrough()) {
+			return 'image/svg+xml';
+		}
+
 		$format = $this->options->getFormat();
 
 		if (! $format instanceof Format) {
@@ -102,6 +106,10 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getExtension(): string
 	{
+		if ($this->isSvgPassthrough()) {
+			return 'svg';
+		}
+
 		return $this->options->getFormat()?->value ?? 'avif';
 	}
 
@@ -171,6 +179,19 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	public function getPlaceholder(array $settings = []): string
 	{
 		return '';
+	}
+
+	private function isSvgPassthrough(): bool
+	{
+		if (! $this->options->getPassthrough()) {
+			return false;
+		}
+
+		$extension = $this->source instanceof Asset
+			? $this->source->getExtension()
+			: pathinfo((string) parse_url($this->source, PHP_URL_PATH), PATHINFO_EXTENSION);
+
+		return strtolower($extension) === 'svg';
 	}
 
 	private function dimension(int|float|string|null $value, string $axis): int

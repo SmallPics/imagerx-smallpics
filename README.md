@@ -387,6 +387,8 @@ $sourceAsset = $image->getSource(); // The original Craft asset or source URL.
 $options = $image->getOptions(); // The Small Pics Options object.
 ```
 
+For transformed images, `getMimeType()` and `getExtension()` return an empty string when the format is `strict`, or `auto` or omitted.
+
 ### SVG passthrough
 
 `transformSvgs` defaults to `false`. When false, and the image is an SVG, Small Pics will proxy the SVG to the client without applying any transforms, so that it can be cached the same as other transformed images.

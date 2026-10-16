@@ -80,28 +80,56 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 			$parsedUrl = parse_url($this->getSourceUrl($image));
 			$sourceUrl = ($parsedUrl['path'] ?? '') . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
 
-			$smallpicsParams = $this->normalizeTransform($transform);
 			unset($transformerParams['source']);
 
-			$options = new Options([
+			$params = [
 				...$this->normalizeOptionKeys($config->defaultParams),
 				...$this->normalizeOptionKeys($sourceDefaultParams),
-				...$smallpicsParams,
+				...$this->normalizeTransform($transform),
 				...$this->normalizeOptionKeys($transformerParams),
-			]);
+			];
+
+			if (
+				isset($transform['position'])
+				&& in_array($params['fit'] ?? 'crop', ['crop', Fit::CROP], true)
+				&& ! isset($params['crop'])
+				&& ! isset($params['focalPoint'])
+			) {
+				$position = $transform['position'];
+
+				if (
+					is_string($position)
+					&& preg_match('/^([\d.]+)%?\s+([\d.]+)%?$/', trim($position), $matches)
+				) {
+					$params['focalPoint'] = $matches[1] . 'w:' . $matches[2] . 'h';
+				} elseif (is_string($position)) {
+					$params['crop'] = match ($position) {
+						'top-center' => 'top',
+						'center-left' => 'left',
+						'center-center' => 'center',
+						'center-right' => 'right',
+						'bottom-center' => 'bottom',
+						default => $position,
+					};
+				}
+
+				$params['fit'] ??= Fit::CROP->value;
+			}
+
+			$options = new Options($params);
 
 			if (! $source->transformSvgs) {
 				$options->setPassthrough(true);
 			}
 
 			// Order matters - isAnimatedGif downloads the file and does work which we'd like to avoid if possible.
-			if (! $source->transformAnimatedGifs && SmallPicsHelper::isAnimatedGif($image)) {
-				$url = $this->getSourceUrl($image);
-			} else {
-				$url = $urlBuilder->buildUrl($sourceUrl, $options);
-			}
+			$sourcePassthrough = ! $source->transformAnimatedGifs
+				&& SmallPicsHelper::isAnimatedGif($image);
+			$url = $sourcePassthrough
+				? $this->getSourceUrl($image)
+				: $urlBuilder->buildUrl($sourceUrl, $options);
 
-			return new SmallPicsTransformedImageModel($url, $image, $options);
+			return new SmallPicsTransformedImageModel($url, $image, $options, $sourcePassthrough);
 		} catch (\Exception $exception) {
 			throw new ImagerException($exception->getMessage(), $exception->getCode(), $exception);
 		}
@@ -147,24 +175,6 @@ class SmallPicsTransformer extends Component implements TransformerInterface
 
 		if (isset($transform['fill']) && ! isset($params['background'])) {
 			$params['background'] = $transform['fill'];
-		}
-
-		/** @var array<array-key, mixed> $transformerParams */
-		$transformerParams = $transform['transformerParams'] ?? [];
-		$overrides = $this->normalizeOptionKeys($transformerParams);
-		if (! isset($overrides['crop']) && ! isset($overrides['focalPoint']) && isset($transform['position']) && in_array($params['fit'] ?? 'crop', ['crop', Fit::CROP], true) && ! isset($params['crop']) && ! isset($params['focalPoint'])) {
-			$position = $transform['position'];
-			if (is_string($position) && preg_match('/^([\d.]+)%?\s+([\d.]+)%?$/', trim($position), $matches)) {
-				$params['focalPoint'] ??= $matches[1] . 'w:' . $matches[2] . 'h';
-			} elseif (is_string($position) && ! isset($params['crop'])) {
-				$params['crop'] = match ($position) {
-					'top-center' => 'top', 'center-left' => 'left', 'center-center' => 'center',
-					'center-right' => 'right', 'bottom-center' => 'bottom',
-					default => $position,
-				};
-			}
-
-			$params['fit'] ??= Fit::CROP->value;
 		}
 
 		return $params;

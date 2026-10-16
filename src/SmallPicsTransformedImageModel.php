@@ -3,6 +3,7 @@
 namespace smallpics\imagerx\smallpics;
 
 use craft\elements\Asset;
+use craft\models\ImageTransform;
 use smallpics\smallpics\enums\Format;
 use smallpics\smallpics\Options;
 use spacecatninja\imagerx\models\TransformedImageInterface;
@@ -18,7 +19,8 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	public function __construct(
 		private readonly string $url,
 		private readonly Asset|string $source,
-		private readonly Options $options
+		private readonly Options $options,
+		private readonly bool $sourcePassthrough = false
 	) {
 	}
 
@@ -69,16 +71,6 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getMimeType(): string
 	{
-		if ($this->isSvgPassthrough()) {
-			return 'image/svg+xml';
-		}
-
-		$format = $this->options->getFormat();
-
-		if (! $format instanceof Format) {
-			return self::DEFAULT_MIME_TYPE;
-		}
-
 		// @see https://github.com/smallpics/smallpics-php/blob/main/src/enums/Format.php
 		$formats = [
 			'jpg' => 'image/jpeg',
@@ -88,9 +80,10 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 			'webp' => 'image/webp',
 			'avif' => 'image/avif',
 			'jxl' => 'image/jxl',
+			'svg' => 'image/svg+xml',
 		];
 
-		return $formats[$format->value];
+		return $formats[$this->outputExtension() ?? ''] ?? '';
 	}
 
 	/**
@@ -106,11 +99,7 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 	 */
 	public function getExtension(): string
 	{
-		if ($this->isSvgPassthrough()) {
-			return 'svg';
-		}
-
-		return $this->options->getFormat()?->value ?? 'avif';
+		return $this->outputExtension() ?? '';
 	}
 
 	/**
@@ -181,28 +170,49 @@ class SmallPicsTransformedImageModel implements TransformedImageInterface, Strin
 		return '';
 	}
 
-	private function isSvgPassthrough(): bool
+	private function outputExtension(): ?string
 	{
-		if (! $this->options->getPassthrough()) {
-			return false;
-		}
-
 		$extension = $this->source instanceof Asset
 			? $this->source->getExtension()
 			: pathinfo((string) parse_url($this->source, PHP_URL_PATH), PATHINFO_EXTENSION);
+		$extension = strtolower($extension);
 
-		return strtolower($extension) === 'svg';
+		if (
+			$this->sourcePassthrough
+			|| ($this->options->getPassthrough() && $extension === 'svg')
+		) {
+			return $extension;
+		}
+
+		$format = $this->options->getFormat();
+
+		return match ($format) {
+			Format::AUTO, Format::STRICT, null => null,
+			default => $format->value,
+		};
 	}
 
 	private function dimension(int|float|string|null $value, string $axis): int
 	{
-		if (is_string($value) && preg_match('/^([\d.]+)([pwh])$/', $value, $matches)) {
+		if (
+			is_string($value)
+			&& preg_match('/^([\d.]+)([pwh])$/', $value, $matches)
+		) {
 			if (! $this->source instanceof Asset) {
 				return 0;
 			}
 
-			$width = $matches[2] === 'w' || ($matches[2] === 'p' && $axis === 'width');
-			$base = $width ? $this->source->getWidth() : $this->source->getHeight();
+			$width = $matches[2] === 'w'
+				|| ($matches[2] === 'p' && $axis === 'width');
+
+			$transform = new ImageTransform([
+				'upscale' => false,
+			]);
+
+			$base = $width
+				? $this->source->getWidth($transform)
+				: $this->source->getHeight($transform);
+
 			return (int) round((float) $matches[1] * ($base ?? 0) / 100);
 		}
 
